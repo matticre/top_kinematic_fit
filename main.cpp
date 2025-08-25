@@ -42,7 +42,7 @@ TH1D hNuResPhi("hPhiRes","Neutrino Phi Resolution Prefit",50,-4,4);
 TH1D hNuResPt("hNuResPt","Neutrino Pt Resolution Prefit",50,-50,50);
 
 /// Top quark mass after the kinematic fit.
-TH1D hMtopl("m_{t}","Top Mass Postfit",30,80,260);
+TH1D hMtopl("m_{t}","Top Mass Postfit;",30,80,260);
 /// Top quark mass before the kinematic fit.
 TH1D hMtop_pre("m_{t}^{prefit}","Top Mass Prefit",30,60,260);
 
@@ -498,20 +498,23 @@ int main(){
     cout << "The measured top mass is: " << hMtopl.GetMean() << " +- " << hMtopl.GetMeanError() << " GeV" << endl;
 
 
+    hMtopl.SetXTitle("m_{t} (GeV)");  
+    hMW.SetXTitle("m_{W} (GeV)"); 
+    hMtop_pre.SetXTitle("m_{t} (GeV)"); 
+    hMWpre.SetXTitle("m_{W} (GeV)"); 
+    
     // Drawing canvases with histograms.
-    TCanvas c2("c2","",5,5,1500,900);
-    c2.Divide(2,2);
-    c2.cd(1); hNuResPt.Draw();
-    c2.cd(2); hNuResPhi.Draw();
-    c2.cd(3); hMWpre.Draw();
-    c2.cd(4); hThenu.Draw();
+    TCanvas c2("c2","",5,5,1500,600);
+    c2.Divide(2,1);
+    c2.cd(1); hThere.Draw();
+    c2.cd(2); hThenu.Draw();
 
     TCanvas c1("c1","",5,5,1500,900);
     c1.Divide(2,2);
     c1.cd(1); hMtopl.Draw();
     c1.cd(2); hMW.Draw();
     c1.cd(3); hMtop_pre.Draw();
-    c1.cd(4); hThere.Draw();
+    c1.cd(4); hMWpre.Draw();
 
     // Run the ROOT application.
     app.Run(true);
