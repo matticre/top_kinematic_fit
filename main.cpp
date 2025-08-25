@@ -172,9 +172,9 @@ class Particle: public TLorentzVector {
  */
 TLorentzVector returnV (double p, double phi, double theta, double m){
 
-    double px = p * sin(theta)*cos(phi);
-    double py = p * sin(theta)*sin(phi);
-    double pz = p * cos(theta);
+    double px = p*sin(theta)*cos(phi);
+    double py = p*sin(theta)*sin(phi);
+    double pz = p*cos(theta);
     double p0 = sqrt(px*px+py*py+pz*pz+m*m);
 
     TLorentzVector P(px,py,pz,p0);
@@ -280,17 +280,17 @@ void Event(TGenPhaseSpace &tgps, vector<Particle> &decayparticle, double &wlep){
     double t_sim   = sqrt(t_mass*t_width*tan(M_PI*(rnd.Rndm()-0.5))+t_mass*t_mass);
     double w_sim   = sqrt(w_mass*w_width*tan(M_PI*(rnd.Rndm()-0.5))+w_mass*w_mass);
 
-    double bw_masses[2]  = {w_sim, bot->Mass()};
-    double enu_masses[2] = {em->Mass(), 0};
+    vector<double> bw_masses  = {w_sim, bot->Mass()};
+    vector<double> enu_masses = {em->Mass(), 0};
 
     TLorentzVector t1_in(0,0,0,t_sim);
 
-    tgps.SetDecay(t1_in, 2, bw_masses);
+    tgps.SetDecay(t1_in, 2, &bw_masses[0]);
     wlep = tgps.Generate();
     Particle W1(Wp, tgps.GetDecay(0));
     Particle bot1(bot, tgps.GetDecay(1));
 
-    tgps.SetDecay(W1, 2, enu_masses);
+    tgps.SetDecay(W1, 2, &enu_masses[0]);
     wlep *= tgps.Generate();
     Particle pos(em, tgps.GetDecay(0));
     Particle nu_r(nu,tgps.GetDecay(1));
@@ -489,19 +489,18 @@ int main(){
     minuit->SetPrintLevel(-1);
     minuit->SetFCN(fcn);
 
-    vector<Particle> decayparticles, recoparticles;
-
+    // First, calculate the neutrino resolutions.
     CalculateResolutions(tgps);
-
     // Set the neutrino resolution for the fit based on the first loop.
     res.np   = hNuResPt.GetStdDev();
     res.nphi = hNuResPhi.GetStdDev();
-
+    
+    // Now, run the main simulation and kinematic fit.
     RunSimulationAndFit(tgps, minuit);
 
     // Print final results.
-    cout << "La massa del top è: " << top->Mass() << endl;
-    cout << "La massa del top misurata è: " << hMtopl.GetMean() << " +- " << hMtopl.GetMeanError() << endl;
+    cout << "The top mass is: " << top->Mass() << endl;
+    cout << "The measured top mass is: " << hMtopl.GetMean() << " +- " << hMtopl.GetMeanError() << endl;
 
 
     // Drawing canvases with histograms.
@@ -527,7 +526,6 @@ int main(){
     TCanvas theta("theta","",5,5,1500,9000);
     hThere.Draw();
 
-
     // Fill the pull histogram for the top quark mass.
     for (int i=0; i<res.topsim.size(); i++){
         hPulltop.Fill((res.topfit[i]-res.topsim[i])/hMtopl.GetStdDev());
@@ -540,6 +538,5 @@ int main(){
     // Run the ROOT application.
     app.Run(true);
 
-    delete minuit;
     return 0;
 }
