@@ -352,11 +352,7 @@ vector<TLorentzVector> Kinematic_Fit(TMinuit *minuit, const vector<Particle> &re
     minuit->DefineParameter(8,"nuThe",res.data[8],0.01,0.,0.);
 
     // Execute the minimization.
-    int status = minuit->Command("MIGRAD");
-    if (status != 0) {
-        cout << "TMinuit minimization failed with status: " << status << endl;
-        return {};
-    }
+    minuit->Command("MIGRAD");
 
     // Retrieving fitted parameters.
     double pb,  epb,  phib,  ephib,  theb,  etheb;
@@ -459,14 +455,9 @@ void RunSimulationAndFit(TGenPhaseSpace &tgps, TMinuit *minuit) {
         double mw_pre   = (P_nu_pre+recoparticles[1]).Mag();
 
         // Perform the kinematic fit.
-        vector<TLorentzVector> fitResults = Kinematic_Fit(minuit, recoparticles, decayparticles);
-        if (fitResults.empty()) {
-            continue; // Skip event if fit failed
-        }
-        
-        
-        double mtoplep = (fitResults[0]+fitResults[1]+fitResults[2]).Mag();
-        double mw      = (fitResults[1]+fitResults[2]).Mag();
+        vector<TLorentzVector> vettori = Kinematic_Fit(minuit, recoparticles, decayparticles);
+        double mtoplep = (vettori[0]+vettori[1]+vettori[2]).Mag();
+        double mw      = (vettori[1]+vettori[2]).Mag();
 
         res.topfit.push_back(mtoplep);
 
@@ -475,7 +466,7 @@ void RunSimulationAndFit(TGenPhaseSpace &tgps, TMinuit *minuit) {
         hMWpre.Fill(mw_pre,wlep);
         hMW.Fill(mw,wlep);
         hMtopl.Fill(mtoplep,wlep);
-        hThenu.Fill(fitResults[2].Theta(),wlep);
+        hThenu.Fill(vettori[2].Theta(),wlep);
 
         decayparticles.clear();
         recoparticles.clear();
