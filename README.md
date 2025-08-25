@@ -10,9 +10,8 @@ The program is structured in the following steps:
 
 1.  **Event Generation**: Top quark decays are simulated using the `TGenPhaseSpace` class from the ROOT framework. The decay chain $t \\rightarrow Wb \\rightarrow e\\nu b$ is simulated, generating the four-momenta of the final state particles: a b-quark, an electron, and a neutrino.
 2.  **Detector Simulation**: Realistic measurement uncertainties are applied to the generated particles' four-momenta. This step simulates the limited resolution of a particle detector. The uncertainties (resolutions) on momentum, azimuthal angle ($\\phi$), and polar angle ($\\theta$) are modeled using Gaussian distributions.
-3.  **Initial Neutrino Reconstruction**: An initial estimate of the neutrino's four-momentum is made using the measured transverse momenta of the b-quark and the electron. The neutrino's momentum components are reconstructed to satisfy momentum conservation in the transverse plane.
-4.  **Kinematic Fit**: The central part of the project is the kinematic fit. This technique uses a $\\chi^2$ minimization to find the most probable four-momenta of the final state particles, subject to physical constraints. The `TMinuit` class from the ROOT framework is used to perform the $\\chi^2$ minimization.
-5.  **Data Analysis and Visualization**: Histograms are used to visualize the results, including the distribution of the reconstructed top quark mass before and after the kinematic fit.
+3.  Kinematic Fit: The central part of this project is the kinematic fit. This technique uses χ2 minimization to find the most probable four-momenta of the final state particles. It constrains the kinematic quantities of the neutrino, as it originates from the decay of a W boson. Since the W boson's mass is not represented by a simple Gaussian distribution, a Breit-Wigner term is added to the generalized chi-square function to perform the minimization correctly. The `TMinuit` class from the ROOT framework is used to perform the $\\chi^2$ minimization.
+4.  **Data Analysis and Visualization**: Histograms are used to visualize the results, including the distribution of the reconstructed top quark mass before and after the kinematic fit.
 
 ## Code Structure
 
