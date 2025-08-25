@@ -455,9 +455,11 @@ void RunSimulationAndFit(TGenPhaseSpace &tgps, TMinuit *minuit) {
         double mw_pre   = (P_nu_pre+recoparticles[1]).Mag();
 
         // Perform the kinematic fit.
-        vector<TLorentzVector> vettori = Kinematic_Fit(minuit, recoparticles, decayparticles);
-        double mtoplep = (vettori[0]+vettori[1]+vettori[2]).Mag();
-        double mw      = (vettori[1]+vettori[2]).Mag();
+        vector<TLorentzVector> fitresults = Kinematic_Fit(minuit, recoparticles, decayparticles);
+        
+        
+        double mtoplep = (fitresults[0]+fitresults[1]+fitresults[2]).Mag();
+        double mw      = (fitresults[1]+fitresults[2]).Mag();
 
         res.topfit.push_back(mtoplep);
 
@@ -466,7 +468,7 @@ void RunSimulationAndFit(TGenPhaseSpace &tgps, TMinuit *minuit) {
         hMWpre.Fill(mw_pre,wlep);
         hMW.Fill(mw,wlep);
         hMtopl.Fill(mtoplep,wlep);
-        hThenu.Fill(vettori[2].Theta(),wlep);
+        hThenu.Fill(fitresults[2].Theta(),wlep);
 
         decayparticles.clear();
         recoparticles.clear();
