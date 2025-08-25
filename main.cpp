@@ -1,5 +1,14 @@
-// chiudo sull'angolo non sull'impulso
-   
+/**
+ * @file main.cpp
+ * @brief This program simulates top quark decay and performs a kinematic fit
+ * to determine the top quark mass.
+ *
+ * It uses the ROOT framework for event generation, simulation, data analysis,
+ * and visualization. The core of the project is a chi-square minimization
+ * to reconstruct the kinematics of the decay products, including the undetected
+ * neutrino.
+ */
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -16,49 +25,66 @@
 #include "TMinuit.h" 
 #include "TLatex.h"
 
+/// Global random number generator.
 TRandom3 rnd;
 
 using namespace std;
 
-//Plotting
-//Risoluzioni da ricavare
-TH1D hNuResPhi("hPhiRes","Risoluzione Phi neutrino prefit",50,-4,4);        // istogramma pt del neutrino
-TH1D hNuResPt("hNuResPt","Risoluzione Pt neutrino prefit",50,-50,50);       // istogramma phi del neutrino 
+//-----------------------------------------------------------------------------
+// HISTOGRAMS AND PLOTTING
+//-----------------------------------------------------------------------------
 
-//Massa top
-TH1D hMtopl("m_{t}","Massa del top postfit",30,80,260);        // istogramma massa top leptonica
-TH1D hMtop_pre("m_{t}^{prefit}","Massa del top prefit",30,60,260);  // istogramma massa top adronica
+/// Histograms for plotting resolutions and kinematic quantities.
 
-//Massa W
-TH1D hMW("m_{W}","Massa del W postfit",30,70,90);                    // istogramma massa del w dopo il fit
-TH1D hMWpre("m_{W}^{prefit}","Massa del W prefit",30,-10,160);            // istogramma massa del w prefit
+/// Resolution of the neutrino's phi angle before the kinematic fit.
+TH1D hNuResPhi("hPhiRes","Neutrino Phi Resolution Prefit",50,-4,4);
+/// Resolution of the neutrino's transverse momentum before the kinematic fit.
+TH1D hNuResPt("hNuResPt","Neutrino Pt Resolution Prefit",50,-50,50);
 
-TH1D hThenu("hThenu","Distribuzione #theta_{#nu} postfit",30,-0.5,M_PI+0.5);       // istogramma theta del neutrino
+/// Top quark mass after the kinematic fit.
+TH1D hMtopl("m_{t}","Top Mass Postfit",30,80,260);
+/// Top quark mass before the kinematic fit.
+TH1D hMtop_pre("m_{t}^{prefit}","Top Mass Prefit",30,60,260);
 
-//impulso trasverso
-TH1D hNuPtSim("hNuPtSim","PtSim neutrino prefit",50,0,100);
-TH1D hNuPtReal("hNuPtRec","PtRec neutrino prefit",50,0,100);
+/// W boson mass after the kinematic fit.
+TH1D hMW("m_{W}","W Mass Postfit",30,70,90);
+/// W boson mass before the kinematic fit.
+TH1D hMWpre("m_{W}^{prefit}","W Mass Prefit",30,-10,160);
 
-//Pull delle variabili pre e post fit - sono piantate
-TH1D hPullep("hPullep","#Delta(p) elettrone",60,-6,6);         // pull impulso elettrone
-TH1D hPullephi("hPullephi","#Delta(#phi) elettrone",60,-6,6);   // pull phi elettrone
-TH1D hPullethe("hPullethe","#Delta(#theta) elettrone",60,-6,6); // pull theta elettrone
-TH1D hPulljp("hPulljp","#Delta(p) b-jet",60,-6,6);         // pull impulso jet
-TH1D hPulljphi("hPulljphi","#Delta(#phi) b-jet ",60,-6,6);  // pull phi jet
-TH1D hPulljthe("hPulljthe","#Delta(#theta) b-jet",60,-6,6); // pull the jet
+/// Distribution of the neutrino's polar angle after the fit.
+TH1D hThenu("hThenu","Neutrino #theta Distribution Postfit",30,-0.5,M_PI+0.5);
 
-TH1D hThere("hThere","Pull theta postfit",60,-6,6);     // pull theta (vero-fit) del neutrino
+/// Simulated neutrino transverse momentum.
+TH1D hNuPtSim("hNuPtSim","Simulated Neutrino Pt Prefit",50,0,100);
+/// Reconstructed neutrino transverse momentum before the fit.
+TH1D hNuPtReal("hNuPtRec","Reconstructed Neutrino Pt Prefit",50,0,100);
 
-//Componenti x e y dell'impulso del neutrino
-TH1D hPnux("hPnux","p_{x}^{#nu} - p_{x}^{#nu}_{sim}",60,-30,30);  
-TH1D hPnuy("hPnuy","p_{y}^{#nu} - p_{y}^{#nu}_{sim}",60,-30,30); 
+/// Pull distributions for pre- and post-fit variables.
+TH1D hPullep("hPullep","Electron #Delta(p) Pull",60,-6,6);
+TH1D hPullephi("hPullephi","Electron #Delta(#phi) Pull",60,-6,6);
+TH1D hPullethe("hPullethe","Electron #Delta(#theta) Pull",60,-6,6);
+TH1D hPulljp("hPulljp","B-jet #Delta(p) Pull",60,-6,6);
+TH1D hPulljphi("hPulljphi","B-jet #Delta(#phi) Pull ",60,-6,6);
+TH1D hPulljthe("hPulljthe","B-jet #Delta(#theta) Pull",60,-6,6);
 
-//Massa W
-TH1D hMWRe("MW sim","Massa del W simulata",80,50,110);  // istogramma massa del w dopo il fit
-TH1D hPulltop("Pull top","Pull top",40,-6,6);  // istogramma massa del w dopo il fit
+/// Pull of the neutrino's theta (true-fit).
+TH1D hThere("hThere","Neutrino #theta Pull Postfit",60,-6,6);
 
+/// Difference between reconstructed and simulated neutrino px.
+TH1D hPnux("hPnux","p_{x}^{#nu} - p_{x}^{#nu}_{sim}",60,-30,30);
+/// Difference between reconstructed and simulated neutrino py.
+TH1D hPnuy("hPnuy","p_{y}^{#nu} - p_{y}^{#nu}_{sim}",60,-30,30);
 
-//Particelle
+/// Simulated W boson mass.
+TH1D hMWRe("MW sim","Simulated W Mass",80,50,110);
+/// Pull distribution for the top quark mass.
+TH1D hPulltop("Pull top","Top Pull",40,-6,6);
+
+//-----------------------------------------------------------------------------
+// PARTICLE DEFINITIONS AND GLOBAL PARAMETERS
+//-----------------------------------------------------------------------------
+
+/// Particle database from ROOT.
 TDatabasePDG pdg;
 TParticlePDG *top = pdg.GetParticle(6);
 TParticlePDG *bot = pdg.GetParticle(5);
@@ -66,14 +92,15 @@ TParticlePDG *em  = pdg.GetParticle(11);
 TParticlePDG *Wp  = pdg.GetParticle(24);
 TParticlePDG *nu  = pdg.GetParticle(12);
 
-// Parametri simulazione
-const int N_EV = 1e4;   // Numero di eventi
+/// Number of events to simulate.
+const int N_EV = 1e4;
 
-// Array di storage
+/// Namespace to store data.
 namespace data{
-    vector<double> theta_nu(3);     //salvo i dati per la distribuzione di theta
+    vector<double> theta_nu(3);
 }
 
+/// Structure to hold resolution parameters and data for the fit.
 struct reso{
     double ep   = 0.001;
     double ephi = 0.02;
@@ -81,48 +108,73 @@ struct reso{
     double jp   = 0.15;
     double jphi = 0.10;
     double jthe = 0.10;
-    double np   = 0;    
-    double nphi = 0; 
+    double np   = 0;
+    double nphi = 0;
     double efit;
     double jfit;
 
-    vector<double> data, edata;     //salvo i dati iniziali per il fit
+    vector<double> data, edata;
     vector<double> topsim, topfit;
 };
 
+/// Global instance of the resolution parameters.
 reso  res;
 
+//-----------------------------------------------------------------------------
+// CLASSES AND FUNCTIONS
+//-----------------------------------------------------------------------------
+
+/**
+ * @class Particle
+ * @brief Custom class for particles, inheriting from TLorentzVector.
+ *
+ * This class adds particle properties like PDG code and charge.
+ */
 class Particle: public TLorentzVector {
-    
+
     public:
         using TLorentzVector::TLorentzVector;
-        
+
         Particle(TParticlePDG p, TLorentzVector t):
             TLorentzVector(t), m_code(p.PdgCode()), m_charge(p.Charge())
             {};
-        
-        Particle(TParticlePDG *p, TLorentzVector* t): 
+
+        Particle(TParticlePDG *p, TLorentzVector* t):
             TLorentzVector(*t), m_code(p->PdgCode()), m_charge(p->Charge())
             {};
 
+        /**
+         * @brief Returns the particle's charge.
+         */
         int Charge(){
             return m_charge;
         }
 
+        /**
+         * @brief Returns the particle's PDG code.
+         */
         int PdgCode(){
             return m_code;
         }
-        
+
     private:
         int m_code;
         float m_charge;
 };
 
+/**
+ * @brief Creates a TLorentzVector from momentum, angles, and mass.
+ * @param p The momentum magnitude.
+ * @param phi The azimuthal angle.
+ * @param theta The polar angle.
+ * @param m The mass of the particle.
+ * @return A TLorentzVector with the specified parameters.
+ */
 TLorentzVector returnV (double p, double phi, double theta, double m){
-  
-    double px = p*sin(theta)*cos(phi);
-    double py = p*sin(theta)*sin(phi);
-    double pz = p*cos(theta);
+
+    double px = p * sin(theta)*cos(phi);
+    double py = p * sin(theta)*sin(phi);
+    double pz = p * cos(theta);
     double p0 = sqrt(px*px+py*py+pz*pz+m*m);
 
     TLorentzVector P(px,py,pz,p0);
@@ -130,7 +182,18 @@ TLorentzVector returnV (double p, double phi, double theta, double m){
     return P;
 }
 
-//funzione chi quadro
+/**
+ * @brief The chi-square minimization function for TMinuit.
+ * @param npar Number of parameters.
+ * @param gin Unused.
+ * @param f The calculated chi-square value.
+ * @param par Array of parameters to be fitted.
+ * @param flag Unused.
+ *
+ * This function calculates the generalized chi-square value by summing the
+ * squared differences between measured and fitted parameters, and adds a
+ * Breit-Wigner term for the W boson mass constraint.
+ */
 void fcn (int &npar, double *gin, double &f, double *par, int flag){
     f = 0.0;
 
@@ -143,13 +206,18 @@ void fcn (int &npar, double *gin, double &f, double *par, int flag){
 
     double M   = (P_e+P_nu).Mag();
     double eMW = Wp->Width();
-    
-    //vincolo cinematico
-    //f += pow((Wp->Mass()-M)/eMW,2);
+
+    // The Breit-Wigner constraint for the W boson mass.
     f += -2*log(TMath::BreitWignerRelativistic(M,Wp->Mass(),eMW));
 }
 
-//applico la risoluzione
+/**
+ * @brief Applies detector resolution (Gaussian smearing) to a particle's kinematics.
+ * @param track The particle to which the resolution is applied.
+ *
+ * The function modifies the momentum, phi, and theta of the particle based
+ * on predefined resolution values for electrons and b-jets.
+ */
 void ApplyResolution (Particle &track){
 
     double m   = sqrt(track.T()*track.T()-track.Rho()*track.Rho());
@@ -161,14 +229,14 @@ void ApplyResolution (Particle &track){
 
     if(abs(track.PdgCode())!=12){
 
-        if(abs(track.PdgCode())==11){   //elettrone
+        if(abs(track.PdgCode())==11){
             res.efit = res.ep*P*P;
 
             P   = rnd.Gaus(P, res.ep*P*P);
             phi = rnd.Gaus(phi, res.ephi);
             the = rnd.Gaus(the, res.ethe);
 
-        } else if (abs(track.PdgCode())==5) {  //quark b
+        } else if (abs(track.PdgCode())==5) {
             res.jfit = res.jp*P;
 
             P   = rnd.Gaus(P,   res.jp*P);
@@ -183,15 +251,27 @@ void ApplyResolution (Particle &track){
     track.SetE(sqrt(P*P+m*m));
 }
 
+/**
+ * @brief Applies detector resolution to a vector of particles.
+ * @param recoparticles The vector of particles to be smeared.
+ */
 void Reso(vector<Particle>& recoparticles){
     for (int i=0; i<recoparticles.size(); i++){
         ApplyResolution(recoparticles[i]);
     }
 }
 
-//simulazione evento
+/**
+ * @brief Simulates a single top quark decay event.
+ * @param tgps The TGenPhaseSpace object for decay generation.
+ * @param decayparticle A vector to store the generated particles.
+ * @param wlep The weight of the decay.
+ *
+ * This function generates the kinematics of the final state particles from
+ * the top quark decay using a phase space generator.
+ */
 void Event(TGenPhaseSpace &tgps, vector<Particle> &decayparticle, double &wlep){
-    
+
     double t_mass  = top->Mass();
     double t_width = top->Width();
     double w_mass  = Wp->Mass();
@@ -199,19 +279,17 @@ void Event(TGenPhaseSpace &tgps, vector<Particle> &decayparticle, double &wlep){
 
     double t_sim   = sqrt(t_mass*t_width*tan(M_PI*(rnd.Rndm()-0.5))+t_mass*t_mass);
     double w_sim   = sqrt(w_mass*w_width*tan(M_PI*(rnd.Rndm()-0.5))+w_mass*w_mass);
-    
-    double bw_masses[2]  = {w_sim, bot->Mass()}; //array di masse del primo decadimento
-    double enu_masses[2] = {em->Mass(), 0};      //array di masse del secondo decadimento
+
+    double bw_masses[2]  = {w_sim, bot->Mass()};
+    double enu_masses[2] = {em->Mass(), 0};
 
     TLorentzVector t1_in(0,0,0,t_sim);
-    
-    // ttbar ->  W+ b W- bbar -> e+ nu b + qqbar- bbar
+
     tgps.SetDecay(t1_in, 2, bw_masses);
-    wlep = tgps.Generate();        
+    wlep = tgps.Generate();
     Particle W1(Wp, tgps.GetDecay(0));
     Particle bot1(bot, tgps.GetDecay(1));
 
-    // faccio decadere il W positivo in positrone e nu
     tgps.SetDecay(W1, 2, enu_masses);
     wlep *= tgps.Generate();
     Particle pos(em, tgps.GetDecay(0));
@@ -219,17 +297,27 @@ void Event(TGenPhaseSpace &tgps, vector<Particle> &decayparticle, double &wlep){
 
     decayparticle.push_back(bot1);
     decayparticle.push_back(pos);
-    decayparticle.push_back(nu_r);        
-} 
-    
-//programma fit cinematico
-vector<TLorentzVector> Kinematic_Fit(TMinuit *minuit, vector<Particle> &recoparticles, vector<Particle> &decayparticles){
+    decayparticle.push_back(nu_r);
+}
 
-    //jet
+/**
+ * @brief Performs the kinematic fit using TMinuit.
+ * @param minuit The TMinuit object for minimization.
+ * @param recoparticles The measured particles after detector simulation.
+ * @param decayparticles The true simulated particles.
+ * @return A vector of TLorentzVectors for the fitted particles.
+ *
+ * This function sets up the parameters for the fit, runs the minimization,
+ * and returns the fitted kinematic quantities.
+ */
+vector<TLorentzVector> Kinematic_Fit(TMinuit *minuit, const vector<Particle> &recoparticles, const vector<Particle> &decayparticles){
+
+    // Setting up initial data for the fit.
+    //b-jet
     res.data.push_back(recoparticles[0].P());
     res.data.push_back(recoparticles[0].Phi());
     res.data.push_back(recoparticles[0].Theta());
-    //elettrone
+    //electron
     res.data.push_back(recoparticles[1].P());
     res.data.push_back(recoparticles[1].Phi());
     res.data.push_back(recoparticles[1].Theta());
@@ -238,6 +326,7 @@ vector<TLorentzVector> Kinematic_Fit(TMinuit *minuit, vector<Particle> &recopart
     res.data.push_back(recoparticles[2].Phi());
     res.data.push_back(recoparticles[2].Theta());
 
+    // Setting up errors for the fit parameters.
     res.edata.push_back(res.jfit);
     res.edata.push_back(res.jphi);
     res.edata.push_back(res.jthe);
@@ -245,27 +334,30 @@ vector<TLorentzVector> Kinematic_Fit(TMinuit *minuit, vector<Particle> &recopart
     res.edata.push_back(res.efit);
     res.edata.push_back(res.ephi);
     res.edata.push_back(res.ethe);
-    
+
     res.edata.push_back(res.np);
     res.edata.push_back(res.nphi);
 
+    // Defining parameters for TMinuit.
     minuit->DefineParameter(0,"bP"  ,res.data[0],0.01,0.,0.);
     minuit->DefineParameter(1,"bPhi",res.data[1],0.01,0.,0.);
     minuit->DefineParameter(2,"bThe",res.data[2],0.01,0.,0.);
-    
+
     minuit->DefineParameter(3,"eP"  ,res.data[3],0.01,0.,0.);
     minuit->DefineParameter(4,"ePhi",res.data[4],0.01,0.,0.);
     minuit->DefineParameter(5,"eThe",res.data[5],0.01,0.,0.);
-    
+
     minuit->DefineParameter(6,"nuP"  ,res.data[6],0.01,0.,0.);
     minuit->DefineParameter(7,"nuPhi",res.data[7],0.01,0.,0.);
     minuit->DefineParameter(8,"nuThe",res.data[8],0.01,0.,0.);
 
+    // Execute the minimization.
     minuit->Command("MIGRAD");
 
-    double pb,  epb,  phib,  ephib,  theb,  etheb;  //variabili b       
-    double pe,  epe,  phie,  ephie,  thee,  ethee;  //variabili e    
-    double pnu, epnu, phinu, ephinu, thenu, ethenu; //variabili nu
+    // Retrieving fitted parameters.
+    double pb,  epb,  phib,  ephib,  theb,  etheb;
+    double pe,  epe,  phie,  ephie,  thee,  ethee;
+    double pnu, epnu, phinu, ephinu, thenu, ethenu;
 
     minuit->GetParameter(0,pb,epb);
     minuit->GetParameter(1,phib,ephib);
@@ -279,72 +371,73 @@ vector<TLorentzVector> Kinematic_Fit(TMinuit *minuit, vector<Particle> &recopart
     minuit->GetParameter(7,phinu,ephinu);
     minuit->GetParameter(8,thenu,ethenu);
 
-    TLorentzVector P_b  = returnV(pb,phib,theb,bot->Mass()); //b-jet
-    TLorentzVector P_e  = returnV(pe,phie,thee,em->Mass());  //elettrone/positrone
-    TLorentzVector P_nu = returnV(pnu,phinu,thenu,0);        //neutrino    
+    // Creating TLorentzVectors from the fitted parameters.
+    TLorentzVector P_b  = returnV(pb,phib,theb,bot->Mass());
+    TLorentzVector P_e  = returnV(pe,phie,thee,em->Mass());
+    TLorentzVector P_nu = returnV(pnu,phinu,thenu,0);
 
-    //Plotting dei pull
-    hPulljp.Fill((recoparticles[0].P()-pb)/epb);            // pull impulso jet
-    hPulljphi.Fill((recoparticles[0].Phi()-phib)/ephib);    // pull phi jet
-    hPulljthe.Fill((recoparticles[0].Theta()-theb)/etheb);  // pull the jet
+    // Filling pull histograms.
+    hPulljp.Fill((recoparticles[0].P()-pb)/epb);
+    hPulljphi.Fill((recoparticles[0].Phi()-phib)/ephib);
+    hPulljthe.Fill((recoparticles[0].Theta()-theb)/etheb);
 
-    hPullep.Fill((recoparticles[1].P()-pe)/epe);            // pull impulso elettrone
-    hPullephi.Fill((recoparticles[1].Phi()-phie)/ephie);    // pull phi elettrone
-    hPullethe.Fill((recoparticles[1].Theta()-thee)/ethee);  // pull theta elettrone
+    hPullep.Fill((recoparticles[1].P()-pe)/epe);
+    hPullephi.Fill((recoparticles[1].Phi()-phie)/ephie);
+    hPullethe.Fill((recoparticles[1].Theta()-thee)/ethee);
 
-    hThere.Fill((recoparticles[2].Theta()-thenu)/ethenu);        
-    
+    hThere.Fill((recoparticles[2].Theta()-thenu)/ethenu);
+
     return {P_b, P_e, P_nu};
 }
 
-int main(){
-    TApplication app("app",NULL,NULL);
-
-    //Setting generators
-    TGenPhaseSpace tgps;    
-    rnd.SetSeed(12345);
-    
-    //Inizializzo minuit
-    TMinuit *minuit = new TMinuit(9);
-    minuit->SetPrintLevel(-1); 
-    minuit->SetFCN(fcn);
-
+/**
+ * @brief Calculates the neutrino resolutions by simulating events.
+ *
+ * This function runs the first loop to simulate events and fill the
+ * histograms used to determine the neutrino's resolution for the kinematic fit.
+ */
+void CalculateResolutions(TGenPhaseSpace &tgps) {
     vector<Particle> decayparticles, recoparticles;
-
-    //calcolo l'ampiezza le distribuzioni di phi_nu e p_nu
-    for (int i=0; i<N_EV; i++){   
+    for (int i=0; i<N_EV; i++){
         if (i%10000==0){
             cout << i << endl;
         }
         double wlep;
         Event(tgps, decayparticles, wlep);
         recoparticles = decayparticles;
-        Reso(recoparticles);    
+        Reso(recoparticles);
         TLorentzVector nu_r = -recoparticles[0]-recoparticles[1];
-    
+
         hNuResPhi.Fill(nu_r.Phi()-decayparticles[2].Phi());
         hNuResPt.Fill(nu_r.Pt()-decayparticles[2].Pt());
-        
+
         hPnux.Fill(nu_r.X()-decayparticles[2].X());
         hPnuy.Fill(nu_r.Y()-decayparticles[2].Y());
-        
+
         hNuPtSim.Fill(decayparticles[2].Pt());
         hNuPtReal.Fill(nu_r.Pt());
 
         decayparticles.clear();
         recoparticles.clear();
     }
+}
 
-    res.np   = hNuResPt.GetStdDev();
-    res.nphi = hNuResPhi.GetStdDev();
-
-    for (int i=0; i<N_EV; i++){   
+/**
+ * @brief Runs the main simulation and kinematic fit loop.
+ *
+ * This function performs the core logic of the program, generating events,
+ * applying resolutions, performing the kinematic fit, and filling the
+ * final result histograms.
+ */
+void RunSimulationAndFit(TGenPhaseSpace &tgps, TMinuit *minuit) {
+    vector<Particle> decayparticles, recoparticles;
+    for (int i=0; i<N_EV; i++){
 
         if(i%10000==0){
             cout << i << endl;
         }
 
-        double wlep; //peso relativo al decadimento
+        double wlep;
         Event(tgps, decayparticles, wlep);
         recoparticles = decayparticles;
         Reso(recoparticles);
@@ -352,22 +445,23 @@ int main(){
 
         res.topsim.push_back((decayparticles[0]+decayparticles[1]+decayparticles[2]).Mag());
 
-        //calcolo il quadrivettore del neutrino con le informazioni che ho
+        // Calculate pre-fit neutrino four-vector and masses.
         TLorentzVector p_nu  = -recoparticles[0]-recoparticles[1];
         double pt_nu  = p_nu.Pt();
         double phi_nu = p_nu.Phi();
         TLorentzVector P_nu_pre = returnV(pt_nu, phi_nu, decayparticles[2].Theta(), 0.0);
-        
+
         double mtop_pre = (P_nu_pre+recoparticles[0]+recoparticles[1]).Mag();
         double mw_pre   = (P_nu_pre+recoparticles[1]).Mag();
 
-        //eseguo il fit cinematico
+        // Perform the kinematic fit.
         vector<TLorentzVector> vettori = Kinematic_Fit(minuit, recoparticles, decayparticles);
         double mtoplep = (vettori[0]+vettori[1]+vettori[2]).Mag();
-        double mw      = (vettori[1]+vettori[2]).Mag();  
+        double mw      = (vettori[1]+vettori[2]).Mag();
 
         res.topfit.push_back(mtoplep);
 
+        // Fill histograms.
         hMtop_pre.Fill(mtop_pre,wlep);
         hMWpre.Fill(mw_pre,wlep);
         hMW.Fill(mw,wlep);
@@ -375,18 +469,42 @@ int main(){
         hThenu.Fill(vettori[2].Theta(),wlep);
 
         decayparticles.clear();
-        recoparticles.clear(); 
-        res.data.clear(); res.edata.clear(); 
+        recoparticles.clear();
+        res.data.clear(); res.edata.clear();
     }
-    
+}
+
+
+/**
+ * @brief The main function that orchestrates the simulation and analysis.
+ */
+int main(){
+    TApplication app("app",NULL,NULL);
+
+    // Setting up generators and TMinuit.
+    TGenPhaseSpace tgps;
+    rnd.SetSeed(12345);
+
+    TMinuit *minuit = new TMinuit(9);
+    minuit->SetPrintLevel(-1);
+    minuit->SetFCN(fcn);
+
+    vector<Particle> decayparticles, recoparticles;
+
+    CalculateResolutions(tgps);
+
+    // Set the neutrino resolution for the fit based on the first loop.
+    res.np   = hNuResPt.GetStdDev();
+    res.nphi = hNuResPhi.GetStdDev();
+
+    RunSimulationAndFit(tgps, minuit);
+
+    // Print final results.
     cout << "La massa del top è: " << top->Mass() << endl;
     cout << "La massa del top misurata è: " << hMtopl.GetMean() << " +- " << hMtopl.GetMeanError() << endl;
 
 
-
-
-    //Plotting
-
+    // Drawing canvases with histograms.
     TCanvas c2("c2","",5,5,1500,900);
     c2.Divide(2,2);
     c2.cd(1); hNuResPt.Draw();
@@ -407,46 +525,21 @@ int main(){
     cnu.cd(2);  hPnuy.Draw();   hPnuy.SetXTitle("#Delta(p_{y}) (GeV)");
 
     TCanvas theta("theta","",5,5,1500,9000);
-    hThere.Draw();  
+    hThere.Draw();
 
-/*     TCanvas massa_w("massa_w","Massa W",5,5,1500,900);
-    massa_w.Divide(2,1);
-    massa_w.cd(1); hMWpre.Draw();   hMWpre.SetXTitle("m_{W} (GeV)");
-    massa_w.cd(2); hMW.Draw();      hMW.SetXTitle("m_{W} (GeV)");
 
-    TCanvas massa_top("massa_top","Massa top",5,5,1500,900);
-    massa_top.Divide(2,1);
-    massa_top.cd(1); hMtop_pre.Draw(); hMtop_pre.SetXTitle("m_{t} (GeV)");
-    massa_top.cd(2); hMtopl.Draw();    hMtopl.SetXTitle("m_{t} (GeV)"); */
-
-/*     TCanvas pull("Pull","Pull",5,5,1500,900);
-    pull.Divide(3,2);
-    
-    pull.cd(1); hPullep.Draw();     hPullep.SetXTitle("(|p_{e}^{fit}|-|p_{e}^{prefit}|)/#sigma_{fit} (GeV)");
-    pull.cd(2); hPullephi.Draw();   hPullephi.SetXTitle("(#phi_{e}^{fit}-#phi_{e}^{prefit})/#sigma_{fit}");
-    pull.cd(3); hPullethe.Draw();   hPullethe.SetXTitle("(#theta_{e}^{fit}-#theta_{e}^{prefit})/#sigma_{fit}");
-    pull.cd(4); hPulljp.Draw();     hPulljp.SetXTitle("(|p_{b}^{fit}|-|p_{b}^{prefit}|)/#sigma_{fit} (GeV)");
-    pull.cd(5); hPulljphi.Draw();   hPulljphi.SetXTitle("(#phi_{b}^{fit}-#phi_{b}^{prefit})/#sigma_{fit}");
-    pull.cd(6); hPulljthe.Draw();   hPulljthe.SetXTitle("(#theta_{e}^{fit}-#theta_{e}^{prefit})/#sigma_{fit}"); */
-
-/*     TCanvas reso("Reso","Risoluzioni",5,5,1500,900);
-    reso.Divide(2,1);
-    reso.cd(1); hNuResPhi.Draw(); hNuResPhi.SetXTitle("#phi");
-    reso.cd(2); hNuResPt.Draw();  hNuResPt.SetXTitle("P_{T} (GeV)"); */
-/* 
-    TCanvas massa_w_chi("massa_w_chi","Massa W",5,5,1500,900);
-    hMW.Draw();      hMW.SetXTitle("m_{W} (GeV)");
-
- */
-
+    // Fill the pull histogram for the top quark mass.
     for (int i=0; i<res.topsim.size(); i++){
         hPulltop.Fill((res.topfit[i]-res.topsim[i])/hMtopl.GetStdDev());
     }
 
+    // Draw the top quark mass pull.
     TCanvas c6;
     hPulltop.Draw(); hPulltop.SetXTitle("(m_{t}^{fit}-m_{t}^{sim})/#sigma");
 
+    // Run the ROOT application.
     app.Run(true);
 
+    delete minuit;
     return 0;
 }
