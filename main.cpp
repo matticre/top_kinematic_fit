@@ -520,25 +520,9 @@ int main(){
     c1.cd(3); hMtop_pre.Draw();
     c1.cd(4); hThere.Draw();
 
-    TCanvas cnu("cnu","",5,5,1500,900);
-    cnu.Divide(2,1);
-    cnu.cd(1);  hPnux.Draw();   hPnux.SetXTitle("#Delta(p_{x}) (GeV)");
-    cnu.cd(2);  hPnuy.Draw();   hPnuy.SetXTitle("#Delta(p_{y}) (GeV)");
-
-    TCanvas theta("theta","",5,5,1500,9000);
-    hThere.Draw();
-
-    // Fill the pull histogram for the top quark mass.
-    for (int i=0; i<res.topsim.size(); i++){
-        hPulltop.Fill((res.topfit[i]-res.topsim[i])/hMtopl.GetStdDev());
-    }
-
-    // Draw the top quark mass pull.
-    TCanvas c6;
-    hPulltop.Draw(); hPulltop.SetXTitle("(m_{t}^{fit}-m_{t}^{sim})/#sigma");
-
     // Run the ROOT application.
     app.Run(true);
 
+    delete minuit;
     return 0;
 }
