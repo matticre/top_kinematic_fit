@@ -399,9 +399,6 @@ vector<TLorentzVector> Kinematic_Fit(TMinuit *minuit, const vector<Particle> &re
 void CalculateResolutions(TGenPhaseSpace &tgps) {
     vector<Particle> decayparticles, recoparticles;
     for (int i=0; i<N_EV; i++){
-        if (i%10000==0){
-            cout << i << endl;
-        }
         double wlep;
         Event(tgps, decayparticles, wlep);
         recoparticles = decayparticles;
@@ -432,10 +429,6 @@ void CalculateResolutions(TGenPhaseSpace &tgps) {
 void RunSimulationAndFit(TGenPhaseSpace &tgps, TMinuit *minuit) {
     vector<Particle> decayparticles, recoparticles;
     for (int i=0; i<N_EV; i++){
-
-        if(i%10000==0){
-            cout << i << endl;
-        }
 
         double wlep;
         Event(tgps, decayparticles, wlep);
@@ -501,8 +494,8 @@ int main(){
     RunSimulationAndFit(tgps, minuit);
 
     // Print final results.
-    cout << "The top mass is: " << top->Mass() << endl;
-    cout << "The measured top mass is: " << hMtopl.GetMean() << " +- " << hMtopl.GetMeanError() << endl;
+    cout << "The top mass is: " << top->Mass() << " GeV" << endl;
+    cout << "The measured top mass is: " << hMtopl.GetMean() << " +- " << hMtopl.GetMeanError() << " GeV" << endl;
 
 
     // Drawing canvases with histograms.
